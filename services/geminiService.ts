@@ -11,7 +11,7 @@ const extractVideoId = (url: string): string | null => {
 };
 
 
-export const fetchYouTubeInfo = async (videoUrl: string, apiKey: string): Promise<YouTubeInfo> => {
+export const fetchYouTubeInfo = async (videoUrl: string, apiKey: string, pageToken?: string): Promise<YouTubeInfo> => {
   if (!apiKey) {
     throw new Error("APIキーが提供されていません。");
   }
@@ -41,14 +41,17 @@ export const fetchYouTubeInfo = async (videoUrl: string, apiKey: string): Promis
     const thumbnailUrl = videoSnippet.thumbnails.high?.url || videoSnippet.thumbnails.default.url;
 
     // 2. Fetch Comment Threads
-    const commentsUrl = `${API_BASE_URL}/commentThreads?part=snippet&videoId=${videoId}&order=relevance&maxResults=50&key=${apiKey}`;
+    let commentsUrl = `${API_BASE_URL}/commentThreads?part=snippet&videoId=${videoId}&order=relevance&maxResults=100&key=${apiKey}`;
+    if (pageToken) {
+      commentsUrl += `&pageToken=${pageToken}`;
+    }
     const commentsResponse = await fetch(commentsUrl);
      if (!commentsResponse.ok) {
         const errorData = await commentsResponse.json();
         console.error("YouTube Data API Error (commentThreads):", errorData);
         // Comments might be disabled, treat this as a non-fatal error for the user
         if (errorData.error.errors[0].reason === 'commentsDisabled') {
-             return { videoTitle, thumbnailUrl, comments: [] };
+             return { videoTitle, thumbnailUrl, comments: [], nextPageToken: undefined };
         }
         throw new Error(`コメントの取得に失敗しました: ${errorData.error.message}`);
     }
@@ -65,7 +68,13 @@ export const fetchYouTubeInfo = async (videoUrl: string, apiKey: string): Promis
       };
     });
 
-    return { videoTitle, thumbnailUrl, comments };
+    return { 
+      videoTitle, 
+      thumbnailUrl, 
+      comments, 
+      nextPageToken: commentsData.nextPageToken,
+      totalComments: commentsData.pageInfo?.totalResults
+    };
 
   } catch (error) {
     console.error("YouTube API Fetch Error:", error);
@@ -75,6 +84,58 @@ export const fetchYouTubeInfo = async (videoUrl: string, apiKey: string): Promis
             throw new Error('APIキーが無効です。正しいYouTube Data APIキーを設定してください。');
         }
         throw new Error(error.message);
+    }
+    throw new Error("YouTube APIからのデータ取得中に不明なエラーが発生しました。");
+  }
+};
+
+// Function to fetch additional comments (for pagination)
+export const fetchMoreComments = async (videoUrl: string, apiKey: string, pageToken: string): Promise<YouTubeInfo> => {
+  if (!apiKey) {
+    throw new Error("APIキーが提供されていません。");
+  }
+
+  const videoId = extractVideoId(videoUrl);
+  if (!videoId) {
+    throw new Error("無効なYouTube URLです。");
+  }
+
+  try {
+    // Fetch additional comments with page token
+    const commentsUrl = `${API_BASE_URL}/commentThreads?part=snippet&videoId=${videoId}&order=relevance&maxResults=100&pageToken=${pageToken}&key=${apiKey}`;
+    const commentsResponse = await fetch(commentsUrl);
+    
+    if (!commentsResponse.ok) {
+      const errorData = await commentsResponse.json();
+      console.error("YouTube Data API Error (commentThreads):", errorData);
+      throw new Error(`コメントの取得に失敗しました: ${errorData.error.message}`);
+    }
+    
+    const commentsData = await commentsResponse.json();
+
+    const comments: Comment[] = commentsData.items.map((item: any): Comment => {
+      const commentSnippet = item.snippet.topLevelComment.snippet;
+      return {
+        author: commentSnippet.authorDisplayName,
+        authorThumbnail: commentSnippet.authorProfileImageUrl,
+        text: commentSnippet.textDisplay,
+        likes: commentSnippet.likeCount,
+        publishedAt: commentSnippet.publishedAt,
+      };
+    });
+
+    return { 
+      videoTitle: '', // Not needed for additional comments
+      thumbnailUrl: '', // Not needed for additional comments
+      comments, 
+      nextPageToken: commentsData.nextPageToken,
+      totalComments: commentsData.pageInfo?.totalResults
+    };
+
+  } catch (error) {
+    console.error("YouTube API Fetch Error:", error);
+    if (error instanceof Error) {
+      throw new Error(error.message);
     }
     throw new Error("YouTube APIからのデータ取得中に不明なエラーが発生しました。");
   }

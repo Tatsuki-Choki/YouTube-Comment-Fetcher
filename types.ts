@@ -10,4 +10,6 @@ export interface YouTubeInfo {
   videoTitle: string;
   thumbnailUrl: string;
   comments: Comment[];
+  nextPageToken?: string;
+  totalComments?: number;
 }
