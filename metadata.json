@@ -1,0 +1,5 @@
+{
+  "name": "YTコメント取得ツール",
+  "description": "YouTube動画のURLを入力すると、コメントを取得して表示するツールです。",
+  "requestFramePermissions": []
+}
