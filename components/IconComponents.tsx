@@ -7,12 +7,17 @@ interface IconProps {
 export const SpeechBubbleIcon: React.FC<IconProps> = ({ className }) => (
   <svg
     className={className}
-    viewBox="0 0 28 20"
-    fill="currentColor"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={2}
     xmlns="http://www.w3.org/2000/svg"
   >
-    <path d="M27.3246 3.12059C26.9946 1.89882 26.046 0.948824 24.8259 0.618824C22.6517 0 14 0 14 0C14 0 5.34829 0 3.17412 0.618824C1.95353 0.948824 1.00588 1.89882 0.675294 3.12059C0 5.35059 0 10 0 10C0 10 0 14.6494 0.675294 16.8794C1.00588 18.1012 1.95353 19.0512 3.17412 19.3812C5.34829 20 14 20 14 20C14 20 22.6517 20 24.8259 19.3812C26.046 19.0512 26.9946 18.1012 27.3246 16.8794C28 14.6494 28 10 28 10C28 10 28 5.35059 27.3246 3.12059Z" />
-    <path d="M11.2 14.2188L18.4437 10L11.2 5.78125V14.2188Z" fill="white" />
+    <path 
+      strokeLinecap="round" 
+      strokeLinejoin="round" 
+      d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" 
+    />
   </svg>
 );
 
